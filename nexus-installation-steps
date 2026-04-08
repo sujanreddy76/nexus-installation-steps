@@ -1,0 +1,22 @@
+Nexus is build on java so we need to install java to run nexus
+apt update
+apt install openjdk-8-jre-headless
+apt install net-tools ->For debugging at the end just to see whether nexus is running and listening on port
+
+cd /opt
+wget https://download.sonatype.com/nexus/3/nexus-3.91.0-07-linux-x86_64.tar.gz
+tar -zxvf latest-unix.tar.gz
+mv nexus-3.91.0-07-linux-x86_64 nexus
+
+adduser nexus
+chown -R nexus:nexus nexus
+chown -R nexus:nexus sonatype-work
+
+vi nexus/nexus.rc
+run_as_user="nexus"
+
+su - nexus
+/opt/nexus/bin/nexus start
+
+ps aux | grep nexus
+netstat -lnpt
