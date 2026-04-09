@@ -132,6 +132,12 @@ systemctl start nexus
 ```bash
 ln -s /opt/nexus/bin/nexus /etc/init.d/nexus
 ```
+Start and enable Nexus:
+
+```bash
+systemctl enable nexus
+systemctl start nexus
+```
 
 ---
 
