@@ -136,5 +136,4 @@ netstat -lnpt
 /opt/sonatype-work/nexus3/admin.password
 ```
 
-- ⚙️ Ansible playbook (since you were working on that)
-```
+
