@@ -1,6 +1,7 @@
 # Nexus Installation Guide For Ansible
 
-This guide walks you through the manual installation and setup of Nexus Repository Manager on a Linux system.
+This guide provides step-by-step instructions to install and configure Nexus Repository Manager on a Linux system, designed to align with automation using Ansible.
+
 
 ---
 
