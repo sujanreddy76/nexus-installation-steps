@@ -1,5 +1,5 @@
 
-````markdown
+
 # Manual Nexus Installation Guide
 
 This guide walks you through the manual installation and setup of Nexus Repository Manager on a Linux system.
