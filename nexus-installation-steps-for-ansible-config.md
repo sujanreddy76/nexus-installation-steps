@@ -1,4 +1,4 @@
-# Manual Nexus Installation Guide
+# Nexus Installation Guide For Ansible
 
 This guide walks you through the manual installation and setup of Nexus Repository Manager on a Linux system.
 
