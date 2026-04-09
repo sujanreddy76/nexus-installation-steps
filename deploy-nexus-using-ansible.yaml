@@ -1,0 +1,180 @@
+#----------------------- List of modules -----------------------------
+# apt, stat, get_url, unarchive, find, shell, group, user, lineinfile,
+# file, replace, template, service, pause, command, debug
+
+---
+
+# ------------------- PLAY 1: Install dependencies -------------------
+- name: Install java and net-tools
+  hosts: nexus_server
+  become: yes
+  tasks:
+
+    # Step1: Update apt repository cache
+    - name: Update the repo and update_cache
+      apt:
+        update_cache: yes
+        force_apt_get: yes
+        cache_valid_time: 3600
+
+    # Step2: Install Java (required for Nexus)
+    - name: Install java 8
+      apt:
+        name: openjdk-8-jre-headless
+        state: present
+
+    # Step3: Install net-tools (for troubleshooting like netstat)
+    - name: install net-tools
+      apt:
+        name: net-tools
+        state: present
+
+
+# ------------------- PLAY 2: Download & Setup Nexus -------------------
+- name: Download nexus(in /opt) and untar nexus
+  hosts: nexus_server
+  become: yes
+  tasks:
+
+    # Step4: Check if Nexus already exists
+    - name: Check if folder stats
+      stat:
+        path: /opt/nexus
+      register: stat_result
+
+    # Step5: Download Nexus package
+    - name: Download nexus
+      get_url: 
+        url: https://download.sonatype.com/nexus/3/nexus-3.45.0-01-unix.tar.gz
+        dest: /opt/
+      register: download_result 
+
+    # Step6: Extract Nexus tar file (only if not already installed)
+    - name: untar nexus tar file
+      unarchive: 
+        src: "{{download_result.dest}}"
+        dest: /opt/
+        remote_src: true 
+      when: not stat_result.stat.exists  
+
+    # Step7: Find extracted Nexus folder
+    - name: Find nexus folder
+      find:
+        paths: /opt
+        patterns: "nexus-*"
+        file_type: directory
+      register: find_result   
+
+    # Step8: Rename extracted folder to /opt/nexus
+    - name: Rename nexus folder
+      shell: mv {{find_result.files[0].path}} /opt/nexus 
+      when: not stat_result.stat.exists
+
+
+# ------------------- PLAY 3: User & Permissions -------------------
+- name: Create nexus user to own nexus folders
+  hosts: nexus_server
+  become: yes
+  tasks: 
+
+    # Step9: Create nexus group
+    - name: Ensure group nexus exists
+      group:
+        name: nexus
+        state: present
+
+    # Step10: Create nexus user
+    - name: Create nexus user
+      user:
+        name: nexus
+        group: nexus
+        state: present
+        create_home: yes
+
+    # Step11: Add nexus user to sudoers (passwordless sudo)
+    - name: Add nexus user to sudoers file, for password less authentication
+      lineinfile:
+        path: /etc/sudoers
+        state: present
+        line: 'nexus ALL=(ALL) NOPASSWD: ALL'
+        validate: /usr/sbin/visudo -cf %s    
+
+    # Step12: Set ownership for Nexus directory
+    - name: Make nexus user owner of nexus folder
+      file: 
+        path: /opt/nexus
+        state: directory
+        owner: nexus
+        group: nexus
+        recurse: yes
+        mode: '0775'
+
+    # Step13: Set ownership for Nexus data directory
+    - name: Make nexus user owner of sonatype-work folder
+      file: 
+        path: /opt/sonatype-work
+        state: directory
+        owner: nexus
+        group: nexus
+        recurse: yes
+        mode: '0775'  
+
+    # Step14: Configure Nexus to run as nexus user
+    - name: update nexus.rc file
+      replace:
+        path: /opt/nexus/bin/nexus.rc
+        regexp: '^#run.*$'
+        replace: 'run_as_user="nexus"'
+        backup: yes
+
+    # Step15: Copy systemd service file for Nexus
+    - name: copy nexus systemd service file
+      template:
+      # Make sure nexus.service file is available before in the current folder
+        src: nexus.service
+        dest: /etc/systemd/system/nexus.service
+
+    # Step16: Reload systemd, enable and start Nexus service
+    - name: start and enable nexus service
+      service:
+        name: nexus
+        enabled: yes
+        state: started
+        daemon_reload: true        
+
+
+# ------------------- PLAY 4: Verification -------------------
+- name: Verify nexus running
+  hosts: nexus_server
+  tasks: 
+
+    # Step17: Check Nexus process
+    - name: Check with ps 
+      shell: ps aux | grep nexus
+      register: app_status
+
+    # Step18: Print process details
+    - debug: msg={{app_status.stdout_lines}} 
+
+    # Step19: Wait for Nexus to fully start
+    - name: Wait one minute
+      pause: 
+        minutes: 1 
+
+    # Step20: Check listening ports (should include 8081)
+    - name: Check with netstat
+      shell: netstat -lnpt
+      register: app_status
+
+    # Step21: Print port details
+    - debug: msg={{app_status.stdout_lines}}  
+
+    # Step22: Get Nexus admin password
+    - name: Retrieve nexus admin password
+      command: cat /opt/sonatype-work/nexus3/admin.password
+      register: nexus_admin_password
+
+    # Step23: Print admin password
+    - name: Print nexus admin password
+      debug: 
+        msg: "The Nexus admin password is: {{nexus_admin_password.stdout}}"
