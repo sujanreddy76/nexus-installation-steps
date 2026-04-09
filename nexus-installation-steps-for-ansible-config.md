@@ -178,7 +178,8 @@ service nexus restart
 
 ## Notes
 
-* Default Nexus URL: `http://<your-server-ip>:8081`
+* Default Nexus URL: 
 
 ```
+`http://<your-server-ip>:8081`
 
