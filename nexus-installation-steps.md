@@ -135,5 +135,13 @@ netstat -lnpt
 ```bash
 /opt/sonatype-work/nexus3/admin.password
 ```
+## Nexus Login and Configuration
 
+### Login to Nexus
+
+- Default admin username: `admin`
+- Admin password is located in:
+
+```bash
+/opt/sonatype-work/nexus3/admin.password
 
