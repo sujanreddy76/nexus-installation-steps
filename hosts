@@ -1,0 +1,6 @@
+[nexus_server]
+3.239.87.153
+
+[nexus_server:vars]
+ansible_ssh_private_key_file=~/.ssh/id_rsa
+ansible_user=ubuntu
